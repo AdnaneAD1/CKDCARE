@@ -195,20 +195,6 @@ CKDCare offre plusieurs types de rapports :
    - Envoi automatique par email au patient
    - Planification du suivi
 
-## 🧪 Tests
-
-Le projet inclut des tests automatisés pour garantir la qualité du code :
-
-```bash
-# Tests backend
-cd back
-php artisan test
-
-# Tests frontend
-cd project
-npm run test
-```
-
 ## 🛣️ Feuille de route
 
 Fonctionnalités prévues pour les prochaines versions :
@@ -221,11 +207,8 @@ Fonctionnalités prévues pour les prochaines versions :
 
 ## 👥 Équipe et contributions
 
-CKDCare est développé par une équipe de développeurs passionnés par l'amélioration des soins de santé grâce à la technologie.
+CKDCare est développé par une équipe de développeurs formé pour l'hackathon AI4CKD pour l'amélioration des soins de santé grâce à la technologie.
 
-## 📄 Licence
-
-Ce projet est sous licence [MIT](LICENSE).
 
 ---
 
