@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Patient;
 use App\Models\Visite;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class VisiteController extends Controller
@@ -49,8 +50,12 @@ class VisiteController extends Controller
             
             // Envoie de SMS
             $to = '+229'.$patient->telephone;
-            $message = 'Vous avez une consultation planifiée avec le Dr '. $request->medecin . ' pour le '. $request->date . ' à ' . $request->heure . '! Veuillez vérifier votre mail pour plus de détail!';
-            $this->twilio->sendSms($to, $message);
+            $medecin = $request->medecin;
+            $date = $request->date;
+            $heure = $request->heure;
+            $message = 'Vous avez une consultation planifiée avec le Dr '. $medecin . ' pour le '. $date . ' à ' . $heure . '! Veuillez vérifier votre mail pour plus de détail!';
+            $result = $this->twilio->sendSms($to, $message);
+            Log::info('SMS envoyé : ' . $result);
             
             // Préparation des pièces jointes pour l'email
             $attachments = [];
@@ -114,8 +119,14 @@ class VisiteController extends Controller
             if($request->date != $visite->date || $request->heure != $visite->heure) {
                 //Envoie de sms
                 $to = '+229'.Patient::find($request->patient_id)->telephone;
-                $message = 'Votre consultation avec le Dr '. $request->medecin . ' pour le '. $visite->date . ' à ' . $visite->heure . ' a été reportée pour le '. $request->date . ' à ' . $request->heure . '! ';
-                $this->twilio->sendSms($to, $message);
+                $medecin = $request->medecin;
+                $visitedate = $visite->date;
+                $visitedate = $visite->heure;
+                $date = $request->date;
+                $heure = $request->heure;
+                $message = 'Votre consultation avec le Dr '. $medecin . ' pour le '. $visitedate . ' à ' . $visitedate . ' a été reportée pour le '. $date . ' à ' . $heure . '! ';
+                $result = $this->twilio->sendSms($to, $message);
+                Log::info('SMS envoyé : ' . $result);
             }
             $visite->update($request->all());
             if($request->status === 'annulé') {
@@ -140,8 +151,12 @@ class VisiteController extends Controller
 
                 //Envoie de sms
                 $to = '+229'.Patient::find($request->patient_id)->telephone;
-                $message = 'Votre consultation avec le Dr '. $request->medecin . ' pour le '. $request->date . ' à ' . $request->heure . ' a été annulée!';
-                $this->twilio->sendSms($to, $message);
+                $medecin = $request->medecin;
+                $date = $request->date;
+                $heure = $request->heure;
+                $message = 'Votre consultation avec le Dr '. $medecin . ' pour le '. $date . ' à ' . $heure . ' a été annulée!';
+                $result = $this->twilio->sendSms($to, $message);
+                Log::info('SMS envoyé : ' . $result);
             }
 
             return response()->json([
