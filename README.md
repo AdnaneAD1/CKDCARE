@@ -94,7 +94,7 @@ Le projet est organisé en deux dossiers principaux :
 ### Installation du backend
 ```bash
 # Cloner le dépôt
-git clone https://github.com/votre-repo/ckdcare.git
+git clone https://github.com/AdnaneAD1/CKDCARE.git
 cd ckdcare/back
 
 # Installer les dépendances
@@ -129,6 +129,10 @@ php artisan migrate --seed
 
 # Démarrer le serveur
 php artisan serve
+
+# Identifiant par défaut
+Nom d'utilisateur: jean.dupont@ckdcare.fr
+Mot de passe: password123
 ```
 
 ### Installation du frontend
