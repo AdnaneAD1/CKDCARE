@@ -6,7 +6,7 @@ import DashboardLayout from '@/components/dashboard-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Activity, Calendar, Pill as Pills, AlertCircle, Stethoscope, FlaskRound, ClipboardList, Edit2, X, Check, FileText as Report, UserCog } from 'lucide-react';
+import { FileText, Activity, Calendar, Pill as Pills, AlertCircle, Stethoscope, FlaskRound, ClipboardList, Edit2, X, Check, FileText as Report, UserCog, Download } from 'lucide-react';
 import { format, parseISO, differenceInYears } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -38,6 +38,8 @@ import { cn } from '@/lib/utils';
 import { useDeviceType } from '@/hooks/use-device-type';
 import { useSwipeable } from 'react-swipeable';
 import { usePatient } from '@/hooks/use-patient';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 
 export default function DossierDetails() {
   const params = useParams();
@@ -410,6 +412,165 @@ export default function DossierDetails() {
         'Une nouvelle visite devrait être planifiée.' : 
         'Maintien du traitement actuel. Surveillance régulière de la fonction rénale. Régime alimentaire adapté.'
     };
+  };
+
+  const downloadMedicalReport = () => {
+    try {
+      const report = generateMedicalReport();
+      const doc = new jsPDF();
+      
+      // Ajout du titre et des informations d'en-tête
+      doc.setFontSize(18);
+      doc.setTextColor(0, 51, 153); // Couleur bleue pour le titre
+      doc.text('RAPPORT MÉDICAL', 105, 15, { align: 'center' });
+      
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      doc.text('CKDCARE - Centre de suivi des maladies rénales chroniques', 105, 22, { align: 'center' });
+      doc.text(`Date du rapport: ${new Date().toLocaleDateString('fr-FR')}`, 105, 28, { align: 'center' });
+      
+      // Ligne de séparation
+      doc.setDrawColor(0, 51, 153);
+      doc.line(20, 32, 190, 32);
+      
+      // Informations du patient
+      doc.setFontSize(14);
+      doc.setTextColor(0, 51, 153);
+      doc.text('Informations du patient', 20, 40);
+      
+      doc.setFontSize(11);
+      doc.setTextColor(0, 0, 0);
+      doc.text(report.numeroDossier, 20, 48);
+      doc.text(report.resume, 20, 55);
+      
+      // Antécédents médicaux
+      doc.setFontSize(14);
+      doc.setTextColor(0, 51, 153);
+      doc.text('Antécédents médicaux', 20, 70);
+      
+      doc.setFontSize(11);
+      doc.setTextColor(0, 0, 0);
+      const antecedentsLines = report.antecedents.split('\n');
+      let yPos = 78;
+      antecedentsLines.forEach(line => {
+        doc.text(line, 20, yPos);
+        yPos += 7;
+      });
+      
+      // Traitement actuel
+      doc.setFontSize(14);
+      doc.setTextColor(0, 51, 153);
+      doc.text('Traitement actuel', 20, yPos + 5);
+      
+      doc.setFontSize(11);
+      doc.setTextColor(0, 0, 0);
+      const traitementsLines = report.traitements.split('\n');
+      yPos += 13;
+      traitementsLines.forEach(line => {
+        doc.text(line, 20, yPos);
+        yPos += 7;
+      });
+      
+      // Dernière consultation
+      if (report.dernierControle) {
+        doc.setFontSize(14);
+        doc.setTextColor(0, 51, 153);
+        doc.text('Dernière consultation', 20, yPos + 5);
+        
+        doc.setFontSize(11);
+        doc.setTextColor(0, 0, 0);
+        doc.text(`Date: ${report.dernierControle.date} à ${report.dernierControle.heure}`, 20, yPos + 13);
+        
+        // Examens cliniques
+        if (report.dernierControle.examens.length > 0) {
+          doc.text('Examens cliniques:', 20, yPos + 20);
+          let examYPos = yPos + 27;
+          report.dernierControle.examens.forEach(examen => {
+            doc.text(`- ${examen.type}`, 25, examYPos);
+            examYPos += 6;
+          });
+          yPos = examYPos;
+        } else {
+          yPos += 20;
+        }
+        
+        // Examens biologiques
+        if (report.dernierControle.biologie.length > 0) {
+          doc.text('Examens biologiques:', 20, yPos);
+          let bioYPos = yPos + 7;
+          report.dernierControle.biologie.forEach(bio => {
+            doc.text(`- ${bio.type}`, 25, bioYPos);
+            bioYPos += 6;
+          });
+          yPos = bioYPos;
+        } else {
+          yPos += 7;
+        }
+        
+        // Conclusion
+        doc.text('Conclusion:', 20, yPos);
+        doc.text(report.dernierControle.conclusion, 25, yPos + 7);
+        yPos += 14;
+      }
+      
+      // Évolution et recommandations
+      // Vérifier si on a besoin d'une nouvelle page
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+      
+      doc.setFontSize(14);
+      doc.setTextColor(0, 51, 153);
+      doc.text('Évolution', 20, yPos);
+      
+      doc.setFontSize(11);
+      doc.setTextColor(0, 0, 0);
+      doc.text(report.evolution, 20, yPos + 8);
+      
+      doc.setFontSize(14);
+      doc.setTextColor(0, 51, 153);
+      doc.text('Recommandations', 20, yPos + 20);
+      
+      doc.setFontSize(11);
+      doc.setTextColor(0, 0, 0);
+      const recommendationsLines = report.recommendations.split('. ');
+      let recYPos = yPos + 28;
+      recommendationsLines.forEach((line, index) => {
+        if (line) {
+          doc.text(`- ${line}${line.endsWith('.') ? '' : '.'}`, 20, recYPos);
+          recYPos += 7;
+        }
+      });
+      
+      // Pied de page
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Page ${i} sur ${pageCount}`, 105, 285, { align: 'center' });
+        doc.text('Document généré par CKDCARE - Confidentiel', 105, 290, { align: 'center' });
+      }
+      
+      // Générer le nom du fichier
+      const fileName = `Rapport_Medical_${patient.nom}_${patient.prenom}_${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      // Télécharger le PDF
+      doc.save(fileName);
+      
+      toast({
+        title: "Rapport téléchargé",
+        description: `Le rapport médical a été téléchargé avec succès.`,
+      });
+    } catch (error) {
+      console.error('Erreur lors de la génération du PDF:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la génération du rapport.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Fonction pour filtrer les visites non annulées
@@ -1443,7 +1604,7 @@ export default function DossierDetails() {
                     Généré le {new Date().toLocaleDateString('fr-FR')} à {new Date().toLocaleTimeString('fr-FR')}
                   </p>
                 </div>
-                <Button>
+                <Button onClick={downloadMedicalReport}>
                   <FileText className="mr-2 h-4 w-4" />
                   Télécharger le Rapport
                 </Button>
@@ -1455,7 +1616,9 @@ export default function DossierDetails() {
                 return (
                   <div className="space-y-8 max-w-4xl mx-auto">
                     <div className="bg-primary/5 rounded-lg p-6 border">
-                      <h3 className="text-xl font-bold text-primary mb-3">Résumé du Patient</h3>
+                      <div className="flex justify-between items-start">
+                        <h3 className="text-xl font-bold text-primary mb-3">Résumé du Patient</h3>
+                      </div>
                       <p className="text-lg leading-relaxed">{report.numeroDossier} <br /> {report.resume}</p>
                     </div>
 
