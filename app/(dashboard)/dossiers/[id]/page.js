@@ -1443,10 +1443,10 @@ export default function DossierDetails() {
                     Généré le {new Date().toLocaleDateString('fr-FR')} à {new Date().toLocaleTimeString('fr-FR')}
                   </p>
                 </div>
-                // <Button>
-                //   <FileText className="mr-2 h-4 w-4" />
-                //   Télécharger le Rapport
-                // </Button>
+                <Button>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Télécharger le Rapport
+                </Button>
               </div>
             </CardHeader>
             <CardContent className="p-6">
